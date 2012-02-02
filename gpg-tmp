@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# TODO: Trap signals and delete temporary keyring
+
+keyid=$1
+shift
+case "$keyid" in
+    ????????)
+        ;;
+    *)
+        echo "Usage: $0 key args..." 1>&2
+        exit 1
+esac
+
+tmp_keyring=$HOME/$keyid-keyring.gpg
+
+gpg --no-default-keyring --keyring $tmp_keyring --recv-keys $keyid
+gpg --no-default-keyring --keyring $tmp_keyring "$@"
+rm -f $tmp_keyring
