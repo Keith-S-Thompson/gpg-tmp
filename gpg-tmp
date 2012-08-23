@@ -3,11 +3,28 @@
 # TODO: Trap signals and delete temporary keyring
 
 my $keyid;
-if (defined $ARGV[0] and $ARGV[0] =~ /^[0-9a-fA-F]{8}$/) {
+if ($ARGV[0] and $ARGV[0] =~ /^[0-9a-fA-F]{8}$/) {
+    #
+    # First argument is the keyid
+    #
     $keyid = shift;
 }
+elsif (defined $ARGV[-1] and -f $ARGV[-1]) {
+    #
+    # Get keyid from last argument, if it's a file
+    #
+    $keyid = Get_Keyid($ARGV[-1]);
+    if (not defined $keyid) {
+        die "Can't get keyid from file $ARGV[-1]\n";
+    }
+}
 else {
-    die "Usage: $0 key args...\n";
+    print <<"EOF";
+Usage: $0 [key] args...
+       The 8-digit hex key id can be given as the first argument,
+       or it can be extracted from the file named by the last argument.
+EOF
+    exit 1;
 }
 
 my $tmp_keyring = "$ENV{HOME}/$keyid-keyring.gpg";
@@ -15,3 +32,20 @@ my $tmp_keyring = "$ENV{HOME}/$keyid-keyring.gpg";
 system 'gpg', '--no-default-keyring', '--keyring', $tmp_keyring, '--recv-keys', $keyid;
 system 'gpg', '--no-default-keyring', '--keyring', $tmp_keyring, @ARGV;
 unlink $tmp_keyring;
+
+########################################################################
+
+sub Get_Keyid {
+    my($file) = @_;
+    my $keyid = undef;
+    open my $PIPE, '-|', "gpg $file 2>&1";
+    while (<$PIPE>) {
+        # print ">>> $_";
+        if (/gpg: Signature made .* key ID (........)/) {
+            # print ">>> MATCH, keyid = $1\n";
+            $keyid = $1;
+        }
+    }
+    close $PIPE;
+    return $keyid;
+}
