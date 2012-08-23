@@ -1,19 +1,17 @@
-#!/bin/sh
+#!/usr/bin/perl
 
 # TODO: Trap signals and delete temporary keyring
 
-keyid=$1
-shift
-case "$keyid" in
-    ????????)
-        ;;
-    *)
-        echo "Usage: $0 key args..." 1>&2
-        exit 1
-esac
+my $keyid;
+if (defined $ARGV[0] and $ARGV[0] =~ /^[0-9a-fA-F]{8}$/) {
+    $keyid = shift;
+}
+else {
+    die "Usage: $0 key args...\n";
+}
 
-tmp_keyring=$HOME/$keyid-keyring.gpg
+my $tmp_keyring = "$ENV{HOME}/$keyid-keyring.gpg";
 
-gpg --no-default-keyring --keyring $tmp_keyring --recv-keys $keyid
-gpg --no-default-keyring --keyring $tmp_keyring "$@"
-rm -f $tmp_keyring
+system 'gpg', '--no-default-keyring', '--keyring', $tmp_keyring, '--recv-keys', $keyid;
+system 'gpg', '--no-default-keyring', '--keyring', $tmp_keyring, @ARGV;
+unlink $tmp_keyring;
