@@ -17,6 +17,9 @@
 
 # TODO: Trap signals and delete temporary keyring
 
+use strict;
+use warnings;
+
 my $keyid;
 if ($ARGV[0] and $ARGV[0] =~ /^[0-9a-fA-F]{8}$/) {
     #
